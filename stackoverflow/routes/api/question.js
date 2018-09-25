@@ -109,44 +109,72 @@ router.post("/answers/:id", passport.authenticate("jwt", { session: false }), (r
 router.post("/upvote/:id", passport.authenticate("jwt", { session: false }), (req, res) => {
     Profile.findOne({ user: req.user.id })
         .then(profile => {
+            {
+                if (!profile) {
+                    return res.json({ ProfileNotFound: "You must have a profile to Upvote questions" })
+                }
+            }
             Question.findById(req.params.id)
                 .then(question => {
-                    if (question.upvotes.filter(upvote => upvote.user.toString() ===
-                        req.user.id.toString()).length > 0) {
-                        const removethis = question.upvotes
-                            .map(item => item.id)
-                            .indexOf(req.params.id);
-
-                        question.upvotes.splice(removethis, 1);
-                        question.save()
-                            .then(questiondownvote => {
-                                return res.json(questiondownvote);
-                            })
-                            .catch(err => console, log("Problem in saving after downvote", err));
-                        // return res.status(400).json({ NoUpvotes: "Already upvoted to this question" });
+                    if (!question) {
+                        return res.json({ QuestionError: "Question not found!" })
                     }
-                    question.upvotes.unshift({ user: req.user.id });
-                    question.save()
-                        .then(question => {
-                            res.json(question)
-                        })
-                        .catch();
+                    else {
+                        if (question.upvotes.filter(upvote => upvote.user.toString() ===
+                            req.user.id.toString()).length > 0) {
+                            const removethis = question.upvotes
+                                .map(item => item.id)
+                                .indexOf(req.params.id);
 
+                            question.upvotes.splice(removethis, 1);
+                            question.save()
+                                .then(questiondownvote => {
+                                    return res.json(questiondownvote);
+                                })
+                                .catch(err => console, log("Problem in saving after downvote", err));
+                            // return res.status(400).json({ NoUpvotes: "Already upvoted to this question" });
+                        }
+                        else {
+                            question.upvotes.unshift({ user: req.user.id });
+                            question.save()
+                                .then(question => {
+                                    res.json(question)
+                                })
+                                .catch(err => console.log("Problem in saving upvote", err));
+                        }
+
+                    }
                 })
                 .catch(err => console.log("Problem in finding question", err));
         })
         .catch(err => console.log("Problem in upvote question", err));
 });
 //@type - POST
-//@route -  /api/questions/answers/upvote/:id
+//@route -  /api/questions/answers/upvote/:qid/:aid
 //@desc - route for upvoting answers
 //@access - PRIVATE
 router.get("/answers/upvote/:qid/:aid", passport.authenticate("jwt", { session: false }), (req, res) => {
     Profile.findOne({ user: req.user.id })
         .then(profile => {
-            Question.findOne({ user: req.params.qid })
+            if (!profile) {
+                return res.json({ ProfileNotFound: "You must have a profile to love react answers" })
+            }
+
+            Question.findById(req.params.qid)
                 .then(question => {
-                    console.log(question);
+                    if (!question) {
+                        return res.json({ QuestionError: "Question not found!" })
+                    }
+                    //console.log(question);
+                    question.answers.map(item => {
+                        if (item.id == req.params.aid) {
+
+                            item.love.unshift({ user: req.user.id });
+                        }
+                    });
+                    question.save()
+                        .then(() => res.json({ Love: "Successfully Loved!" }))
+                        .catch(err => console.log("Problem in Saving love answer", err));
 
                 })
                 .catch(err => console.log("Problem in Fetching Question", err));

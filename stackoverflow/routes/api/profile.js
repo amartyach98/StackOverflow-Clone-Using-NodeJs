@@ -7,11 +7,11 @@ const passport = require("passport");
 const Person = require("../../models/Person");
 //load Person model
 const Profile = require("../../models/profile");
+
 //@type - GET
 //@route -  /api/profile
 //@desc - route for personal users profile
 //@access - PRIVATE
-
 router.get("/", passport.authenticate('jwt', { session: false }), (req, res) => {
     Profile.findOne({ user: req.user.id })
         .then(profile => {
@@ -85,7 +85,6 @@ router.post("/", passport.authenticate('jwt', { session: false }), (req, res) =>
                             res.status(404).json({ username: "username already exists" })
                         }
                         else {
-                            console.log(profile)
                             //save userprofile
                             new Profile(profilevalue).save()
                                 .then(profile => res.json(profile))
