@@ -162,13 +162,22 @@ router.post("/answers/upvote/:qid/:aid", passport.authenticate("jwt", { session:
 
                 if (item.id == req.params.aid) {
                     console.log(item); {
-                        item.love.unshift({ user: req.user.id });
+                        if (item.love.filter(upvote => upvote.user.toString() ===
+                            req.user.id.toString()).length > 0) {
+                            const removelove = item.love.map(itm => itm.user).indexOf(req.user.id);
+                            item.love.splice(removelove, 1);
+
+                        }
+                        else {
+                            item.love.unshift({ user: req.user.id });
+                        }
+
                     }
                 }
             });
             linux.save().then(linux => {
                 return res.json(linux);
-                
+
             }).catch(err => console.log("Problem in saving Answer upvotes", err));
 
         }).catch(err => console.log("Problem in fetching question", err));

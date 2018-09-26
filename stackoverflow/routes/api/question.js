@@ -153,7 +153,7 @@ router.post("/upvote/:id", passport.authenticate("jwt", { session: false }), (re
 //@route -  /api/questions/answers/upvote/:qid/:aid
 //@desc - route for upvoting answers
 //@access - PRIVATE
-router.get("/answers/upvote/:qid/:aid", passport.authenticate("jwt", { session: false }), (req, res) => {
+router.post("/answers/upvote/:qid/:aid", passport.authenticate("jwt", { session: false }), (req, res) => {
     Profile.findOne({ user: req.user.id })
         .then(profile => {
             if (!profile) {
@@ -168,12 +168,19 @@ router.get("/answers/upvote/:qid/:aid", passport.authenticate("jwt", { session: 
                     //console.log(question);
                     question.answers.map(item => {
                         if (item.id == req.params.aid) {
+                            if (item.love.filter(upvote => upvote.user.toString() ===
+                                req.user.id.toString()).length > 0) {
+                                const removelove = item.love.map(itm => itm.user).indexOf(req.user.id);
+                                item.love.splice(removelove, 1);
+                            }
+                            else {
+                                item.love.unshift({ user: req.user.id });
+                            }
 
-                            item.love.unshift({ user: req.user.id });
                         }
                     });
                     question.save()
-                        .then(() => res.json({ Love: "Successfully Loved!" }))
+                        .then(question => res.json(question))
                         .catch(err => console.log("Problem in Saving love answer", err));
 
                 })
